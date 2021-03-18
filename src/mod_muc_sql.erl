@@ -31,7 +31,7 @@
 %% API
 -export([init/2, store_room/5, restore_room/3, forget_room/3,
 	 can_use_nick/4, get_rooms/2, get_nick/3, set_nick/4,
-	 import/3, export/1]).
+	 import/3, export/1, users_that_should_be_in_room/3]).
 -export([register_online_room/4, unregister_online_room/4, find_online_room/3,
 	 get_online_rooms/3, count_online_rooms/2, rsm_supported/0,
 	 register_online_user/4, unregister_online_user/4,
@@ -183,8 +183,9 @@ get_rooms(LServer, Host) ->
 					 _ ->
 					     OptsD
 			    end,
+					OptsD3 = users_that_should_be_in_room(LServer, Room, OptsD2),
 		      #muc_room{name_host = {Room, Host},
-				      opts = mod_muc:opts_to_binary(OptsD2)}
+				      opts = mod_muc:opts_to_binary(OptsD3)}
 	      end, RoomOpts);
 	_Err ->
 		    []
@@ -192,6 +193,35 @@ get_rooms(LServer, Host) ->
 	_Err ->
 	    []
     end.
+
+users_that_should_be_in_room(LServer, Room, OptsD2) ->
+	% I don't like that I have to query here table that ejabberd does not about
+	% but since ejabber tables are not a reliable source of truth I don't feel that bad about this
+	case catch ejabberd_sql:sql_query(LServer,
+			?SQL("select @(user_testcycle_role.user_jid)s from user_testcycle_role"
+			" join testcycles on testcycles.id = user_testcycle_role.testcycle_id"
+			" join chatrooms on chatrooms.testcycle_id = testcycles.id"
+			" where chatrooms.name = %(Room)s")) of % query that will retrive users that should be inside this room
+	{selected, Users} ->
+		[{Key, Affiliations_db}|_] = lists:filter(fun({K,_}) -> K == affiliations end, OptsD2),
+		case length(Users) /= length(Affiliations_db) of
+			true ->
+				% Warning black magic here XD
+				?INFO_MSG("Adding users affiliations to room ~p",[Room]),
+				User_ids = lists:map(fun({I}) -> {Uuid,_,_} = jid:split(jid:from_string(I)), Uuid  end, Users),
+				Users_affiliation_item = lists:map(fun(U) ->
+					{{U, list_to_binary("xmpp.utest.com"),list_to_binary("")},{member,list_to_binary("")}}
+				end, User_ids),
+
+				Opts_without_affiliations_table = lists:delete({Key, Affiliations_db}, OptsD2),
+				lists:append(Opts_without_affiliations_table, [{Key, Users_affiliation_item}]);
+			false ->
+				OptsD2
+			end;
+	_Err ->
+		?ERROR_MSG("Faild to fetch room affiliations.", []),
+		OptsD2
+	end.
 
 get_nick(LServer, Host, From) ->
     SJID = jid:encode(jid:tolower(jid:remove_resource(From))),
@@ -320,51 +350,17 @@ get_online_rooms(ServerHost, Host, _RSM) ->
 rsm_supported() ->
     false.
 
-register_online_user(ServerHost, {U, S, R}, Room, Host) ->
-    NodeS = erlang:atom_to_binary(node(), latin1),
-    case ?SQL_UPSERT(ServerHost, "muc_online_users",
-		     ["!username=%(U)s",
-		      "!server=%(S)s",
-		      "!resource=%(R)s",
-		      "!name=%(Room)s",
-		      "!host=%(Host)s",
-                      "server_host=%(ServerHost)s",
-		      "node=%(NodeS)s"]) of
-	ok ->
-	    ok;
-	Err ->
-	    Err
-    end.
+register_online_user(_, _, _, _) ->
+    {error, not_implemented}.
 
-unregister_online_user(ServerHost, {U, S, R}, Room, Host) ->
-    %% TODO: report errors
-    ejabberd_sql:sql_query(
-      ServerHost,
-      ?SQL("delete from muc_online_users where username=%(U)s and "
-	   "server=%(S)s and resource=%(R)s and name=%(Room)s and "
-	   "host=%(Host)s")).
+unregister_online_user(_, _, _, _) ->
+    {error, not_implemented}.
 
-count_online_rooms_by_user(ServerHost, U, S) ->
-    case ejabberd_sql:sql_query(
-	   ServerHost,
-	   ?SQL("select @(count(*))d from muc_online_users where "
-		"username=%(U)s and server=%(S)s")) of
-	{selected, [{Num}]} ->
-	    Num;
-	_Err ->
-	    0
-    end.
+count_online_rooms_by_user(_, _, _) ->
+    0.
 
-get_online_rooms_by_user(ServerHost, U, S) ->
-    case ejabberd_sql:sql_query(
-	   ServerHost,
-	   ?SQL("select @(name)s, @(host)s from muc_online_users where "
-		"username=%(U)s and server=%(S)s")) of
-	{selected, Rows} ->
-	    Rows;
-	_Err ->
-	    []
-    end.
+get_online_rooms_by_user(_, _, _) ->
+    [].
 
 export(_Server) ->
     [{muc_room,

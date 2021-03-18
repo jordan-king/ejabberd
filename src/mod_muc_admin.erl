@@ -1159,7 +1159,6 @@ set_room_affiliation(Name, Service, JID, AffiliationString) ->
 	    %% Get the PID for the online room so we can get the state of the room
 	    {ok, StateData} = mod_muc_room:change_item(Pid, jid:decode(JID), affiliation, Affiliation, <<"">>),
 	    mod_muc:store_room(StateData#state.server_host, StateData#state.host, StateData#state.room, make_opts(StateData)),
-	    ok;
 	error ->
 	    error
     end.
