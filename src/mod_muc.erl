@@ -323,13 +323,17 @@ can_use_nick(ServerHost, Host, JID, Nick) ->
 -spec find_online_room(binary(), binary()) -> {ok, pid()} | error.
 find_online_room(Room, Host) ->
     ServerHost = ejabberd_router:host_of_route(Host),
+		erlang:display(ServerHost),
     RMod = gen_mod:ram_db_mod(ServerHost, ?MODULE),
+		erlang:display(RMod),
     RMod:find_online_room(ServerHost, Room, Host).
 
 -spec register_online_room(binary(), binary(), pid()) -> any().
 register_online_room(Room, Host, Pid) ->
     ServerHost = ejabberd_router:host_of_route(Host),
+		erlang:display(ServerHost),
     RMod = gen_mod:ram_db_mod(ServerHost, ?MODULE),
+		erlang:display(RMod),
     RMod:register_online_room(ServerHost, Room, Host, Pid).
 
 -spec get_online_rooms(binary()) -> [{binary(), binary(), pid()}].

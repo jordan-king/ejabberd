@@ -674,7 +674,7 @@ create_room_with_opts(Name1, Host1, ServerHost1, CustomRoomOpts) ->
 	    mod_muc:register_online_room(Name, Host, Pid),
 	    ok;
 	{ok, _} ->
-	    error
+	    found_online_room
     end.
 
 %% Create the room only in the database.
