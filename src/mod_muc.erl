@@ -529,6 +529,11 @@ extract_password(#iq{} = IQ) ->
 -spec unhibernate_room(binary(), binary(), binary()) -> {ok, pid()} | error.
 unhibernate_room(ServerHost, Host, Room) ->
     RMod = gen_mod:ram_db_mod(ServerHost, ?MODULE),
+		erlang:display(ServerHost),
+		erlang:display(Host),
+		erlang:display(Room),
+		erlang:display(RMod),
+		erlang:display(RMod:find_online_room(ServerHost, Room, Host)),
     case RMod:find_online_room(ServerHost, Room, Host) of
 	error ->
 	    case load_room(RMod, Host, ServerHost, Room) of

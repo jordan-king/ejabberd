@@ -306,6 +306,10 @@ unregister_online_room(ServerHost, Room, Host, Pid) ->
 	   "host=%(Host)s and node=%(NodeS)s and pid=%(PidS)s")).
 
 find_online_room(ServerHost, Room, Host) ->
+		erlang:display(<<"Inside mod_muc_sql find_online_room">>),
+		erlang:display(ServerHost),
+		erlang:display(Room),
+		erlang:display(Host),
     case ejabberd_sql:sql_query(
 	   ServerHost,
 	   ?SQL("select @(pid)s, @(node)s from muc_online_room where "

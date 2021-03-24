@@ -1190,10 +1190,15 @@ get_options(Config) ->
 %%    [{JID::string(), Domain::string(), Role::string(), Reason::string()}]
 %% @doc Get the affiliations of  the room Name@Service.
 get_room_affiliations(Name, Service) ->
+	erlang:display(Name),
+	erlang:display(Service),
+	FetchedPid = get_room_pid(Name, Service),
+	erlang:display(FetchedPid),
     case get_room_pid(Name, Service) of
 	Pid when is_pid(Pid) ->
 	    %% Get the PID of the online room, then request its state
 	    {ok, StateData} = mod_muc_room:get_state(Pid),
+			erlang:display(StateData),
 	    Affiliations = maps:to_list(StateData#state.affiliations),
 	    lists:map(
 	      fun({{Uname, Domain, _Res}, {Aff, Reason}}) when is_atom(Aff)->
