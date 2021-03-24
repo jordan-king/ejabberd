@@ -63,6 +63,7 @@ remove_iq_handler(Component, Host, NS) ->
 
 -spec handle(iq()) -> ok.
 handle(#iq{to = To} = IQ) ->
+		erlang:display(To#jid.luser),
     Component = case To#jid.luser of
 		    <<"">> -> ejabberd_local;
 		    _ -> ejabberd_sm
@@ -75,6 +76,10 @@ handle(Component,
   when T == get; T == set ->
     XMLNS = xmpp:get_ns(El),
     Host = To#jid.lserver,
+		Lookup = ets:lookup(Component, {Host, XMLNS}),
+		erlang:display(Component),
+		erlang:display(Host),
+		erlang:display(Lookup),
     case ets:lookup(Component, {Host, XMLNS}) of
 	[{_, Module, Function}] ->
 	    process_iq(Host, Module, Function, Packet);
