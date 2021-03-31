@@ -1104,6 +1104,11 @@ db_opts(Host) ->
 		 end,
             User = ejabberd_option:sql_username(Host),
             Pass = ejabberd_option:sql_password(Host),
+						erlang:display(<<"DISPLAYING DB OPTIONS FROM EJABBERD">>),
+						erlang:display(User),
+            erlang:display(Pass),
+            erlang:display(Server),
+            erlang:display(Timeout),
 	    SSLOpts = get_ssl_opts(Transport, Host),
 	    case Type of
 		mssql ->
