@@ -1008,6 +1008,12 @@ mysql_connect(Server, Port, DB, Username, Password, ConnectTimeout, Transport, _
 		  _ ->
 		      []
 	      end,
+		erlang:display(<<"DISPLAYING DB OPTIONS FOR p1_mysql_conn">>),
+		erlang:display(Username),
+		erlang:display(Password),
+		erlang:display(DB),
+		erlang:display(Server),
+		erlang:display(Port),
     case p1_mysql_conn:start(binary_to_list(Server), Port,
 			     binary_to_list(Username),
 			     binary_to_list(Password),
@@ -1015,10 +1021,13 @@ mysql_connect(Server, Port, DB, Username, Password, ConnectTimeout, Transport, _
 			     ConnectTimeout, fun log/3, SSLOpts)
 	of
 	{ok, Ref} ->
+			erlang:display(<<"Connection returned ok">>),
 	    p1_mysql_conn:fetch(
 		Ref, [<<"set names 'utf8mb4' collate 'utf8mb4_bin';">>], self()),
 	    {ok, Ref};
-	Err -> Err
+	Err ->
+		erlang:display(<<"Connection errored">>),
+		Err
     end.
 
 %% Convert MySQL query result to Erlang ODBC result formalism
